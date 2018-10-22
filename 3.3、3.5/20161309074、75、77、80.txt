@@ -1,0 +1,86 @@
+3.3
+
+import numpy as np
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import classification_report
+density=np.array([0.697,0.774,0.634,0.608,0.556,0.430,0.481,0.437,0.666,0.243,0.245,0.343,0.639,0.657,0.360,0.593,0.719]).reshape(-1,1)
+sugar_rate=np.array([0.460,0.376,0.264,0.318,0.215,0.237,0.149,0.211,0.091,0.267,0.057,0.099,0.161,0.198,0.370,0.042,0.103]).reshape(-1,1)
+xtrain=np.hstack((density,sugar_rate))
+xtrain=np.hstack((np.ones([density.shape[0],1]),xtrain))
+ytrain=np.array([1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0]).reshape(-1,1)
+xtrain,xtest,ytrain,ytest=train_test_split(xtrain,ytrain,test_size=0.25,random_state=33)
+def sigmoid(z):
+    return 1/(1+np.exp(-z))
+#print(sigmoid(density))
+def logit_regression(theta,x,y,iteration=100,learning_rate=0.1,lbd=0.01):
+    for i in range(iteration):
+        theta=theta-learning_rate/y.shape[0]*(np.dot(x.transpose(),(sigmoid(np.dot(x,theta))-y))+lbd*theta)
+        cost=-1/y.shape[0]*(np.dot(y.transpose(),np.log(sigmoid(np.dot(x,theta))))+np.dot((1-y).transpose(),np.log(1-sigmoid(np.dot(x,theta)))))+lbd/(2*y.shape[0])*np.dot(theta.transpose(),theta)
+        print('---------Iteration %d,cost is %f-------------'%(i,cost))
+    return theta
+def predict(theta,x):
+    pre=np.zeros([x.shape[0],1])
+    for idx,valu in enumerate(np.dot(x,theta)):
+        if sigmoid(valu)>=0.5:
+            pre[idx]=1
+        else:
+            pre[idx]=0
+    return pre
+                
+theta_init=np.random.rand(3,1)
+pre=predict(theta,xtest)
+theta=logit_regression(theta_init,xtrain,ytrain,learning_rate=1)
+print('predictions are',pre)
+print('ground truth is',ytest)
+print('theta is ',theta)
+print('the accuracy is',np.mean(pre==ytest))
+print(classification_report(ytest,pre,target_names=['Bad','Good']))
+
+
+
+3.5
+import numpy as np
+import matplotlib.pyplot as plt
+data = [[0.697, 0.460, 1],
+        [0.774, 0.376, 1],
+        [0.634, 0.264, 1],
+        [0.608, 0.318, 1],
+        [0.556, 0.215, 1],
+        [0.403, 0.237, 1],
+        [0.481, 0.149, 1],
+        [0.437, 0.211, 1],
+        [0.666, 0.091, 0],
+        [0.243, 0.267, 0],
+        [0.245, 0.057, 0],
+        [0.343, 0.099, 0],
+        [0.639, 0.161, 0],
+        [0.657, 0.198, 0],
+        [0.360, 0.370, 0],
+        [0.593, 0.042, 0],
+        [0.719, 0.103, 0]]   #书中89页西瓜数据集
+#数据集按瓜好坏分类
+data = np.array([i[:-1] for i in data])
+X0 = np.array(data[:8])
+X1 = np.array(data[8:])
+#求正反例均值
+miu0 = np.mean(X0, axis=0).reshape((-1, 1))
+miu1 = np.mean(X1, axis=0).reshape((-1, 1))
+#求协方差
+cov0 = np.cov(X0, rowvar=False)
+cov1 = np.cov(X1, rowvar=False)
+#求出w
+S_w = np.mat(cov0 + cov1)
+Omiga = S_w.I * (miu0 - miu1)
+#画出点、直线
+plt.scatter(X0[:, 0], X0[:, 1], c='b', label='+', marker = '+')
+plt.scatter(X1[:, 0], X1[:, 1], c='r', label='-', marker = '_')
+plt.plot([0, 1], [0, -Omiga[0] / Omiga[1]], label='y')
+plt.xlabel('密度', fontproperties='SimHei', fontsize=15, color='green');
+plt.ylabel('含糖率', fontproperties='SimHei', fontsize=15, color='green');
+plt.title(r'3.5 线性判别分析', fontproperties='SimHei', fontsize=25);
+plt.legend()
+plt.show()
+
+
+
+
